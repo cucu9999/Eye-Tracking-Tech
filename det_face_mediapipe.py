@@ -78,7 +78,7 @@ class FaceMeshDetector:
         cv2.namedWindow("Camera", 0)
         annotated_image = cv2.flip(annotated_image, 1)
         cv2.imshow("Camera", annotated_image)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
 
 
 

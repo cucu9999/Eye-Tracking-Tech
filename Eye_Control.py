@@ -88,8 +88,8 @@ class EyeCtrl(Serial):
 #直接执行这个.py文件运行下边代码，import到其他脚本中下边代码不会执行
 if __name__ == '__main__':
 
-    # ctrl = HeadCtrl('COM6')                                                           # windows
-    ctrl = EyeCtrl('/dev/ttyACM0')                                                     # ubuntu
+    ctrl = EyeCtrl('COM5')                                                           # windows
+    # ctrl = EyeCtrl('/dev/ttyACM0')                                                # ubuntu
 
     ctrl.eyelid_upper_right = 0.30                                                  # 右上眼皮      向下闭眼 [0, 0.30 , 1] 向上张开
     ctrl.eyelid_upper_left = 0.30                                                   # 左上眼皮      向上张开 [0, 0.30,  1] 向下闭眼

@@ -1,13 +1,13 @@
-
 import tkinter as tk
 from tkinter import ttk
 from threading import Thread
 import time
 
 # 从你的实际控制文件导入
-from Servo_Control_Model import EyeCtrl
+from Eye_Control import EyeCtrl
 
-ctrl = EyeCtrl('/dev/ttyACM0')  # 替换为你的串口设备路径
+ctrl = EyeCtrl('COM5')  
+#ctrl = EyeCtrl('/dev/ttyACM0')  # 替换为你的串口设备路径
 
 # 初始值        创建字典
 initial_value_dict = {
