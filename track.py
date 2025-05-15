@@ -1,24 +1,33 @@
 import cv2
+import time
+import datetime
+import numpy as np
 from det_face_mediapipe import FaceMeshDetector
 from Eye_Control import EyeCtrl
+from writer_hdf5 import WriteManager_HDF5
 
 def main():
     face_mesh_detector = FaceMeshDetector()
-    eye_ctrl = EyeCtrl('COM5')  
+    eye_ctrl = EyeCtrl('COM5') 
+
+    # 生成带时间戳的新文件名
+    now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    hdf5_path = f"output_record_{now_str}.h5"
+
+    writer = None
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌ 无法打开摄像头")
+        print("无法打开摄像头")
         return
 
-    # 摄像头画面宽高
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("❌ 读取摄像头画面失败")
+            print("读取摄像头画面失败")
             break
 
         cv2.imshow("frame", frame)
@@ -28,11 +37,15 @@ def main():
 
         if landmarks:
             try:
-                # 计算人脸的水平和竖直位置，跟踪人脸移动
-                face_center_x = (landmarks[33].x + landmarks[263].x) / 2  # 取左、右眼的水平中点
-                face_center_y = (landmarks[33].y + landmarks[263].y) / 2  # 取左、右眼的竖直中点
+                # 初始化写入器
+                if writer is None:
+                    writer = WriteManager_HDF5(hdf5_path)
 
-                # 控制眼球水平和竖直位置
+                # 计算人脸位置
+                face_center_x = (landmarks[33].x + landmarks[263].x) / 2
+                face_center_y = (landmarks[33].y + landmarks[263].y) / 2
+
+                # 控制眼球偏移
                 horizontal_offset = max(0.0, min(1.0, (0.7 - face_center_x) * 2.5))
                 vertical_offset = max(0.0, min(1.0, (0.7 - face_center_y) * 3.0))
 
@@ -40,23 +53,28 @@ def main():
                 eye_ctrl.eyeball_vertical = vertical_offset
                 eye_ctrl.send()
 
-                print(f"👁️ 控制:眼球水平:{horizontal_offset:.2f} 竖直:{vertical_offset:.2f}")
+                print(f"👁️ 控制: 水平={horizontal_offset:.2f}, 竖直={vertical_offset:.2f}")
+
+                # 写入图像帧与时间戳
+                writer.write_top_image_with_timestamp(frame)
+
+                # 写入动作和动作时间戳
+                action = np.array([horizontal_offset, vertical_offset], dtype=np.float32)
+                writer.write_eye_action_with_timestamp(action)
 
             except Exception as e:
                 print(f"[控制伺服异常] {e}")
         else:
-            print("😐 没检测到人脸")
+            print("😐 没检测到人脸 → 不写入数据")
 
-        # 无论是否检测到人脸都显示画面
-        # cv2.imshow("Face Tracking", cv2.flip(frame, 1))
-
-        # 按 q 退出
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
     cv2.destroyAllWindows()
 
+    if writer is not None:
+        del writer  
 
 if __name__ == "__main__":
     main()
