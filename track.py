@@ -89,11 +89,11 @@ def main():
                 print(f"👁️ 控制: 水平={horizontal_offset:.2f}, 竖直={vertical_offset:.2f}")
 
                 # 写入图像帧与时间戳
-                writer.write_top_image_with_timestamp(frame)
+                # writer.write_top_image_with_timestamp(frame)
 
                 # 写入动作和动作时间戳
                 action = np.array([horizontal_offset, vertical_offset], dtype=np.float32)
-                writer.write_eye_action_with_timestamp(action)
+                # writer.write_eye_action_with_timestamp(action)
 
             except Exception as e:
                 print(f"[控制伺服异常] {e}")
