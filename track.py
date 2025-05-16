@@ -10,6 +10,9 @@ def main():
     face_mesh_detector = FaceMeshDetector()
     eye_ctrl = EyeCtrl('COM5') 
 
+    eyeball_horizontal_init = eye_ctrl.eyeball_horizontal
+    eyeball_vertical_init = eye_ctrl.eyeball_vertical
+
     # 生成带时间戳的新文件名
     now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     hdf5_path = f"output_record_{now_str}.h5"
@@ -20,20 +23,38 @@ def main():
     if not cap.isOpened():
         print("无法打开摄像头")
         return
+    
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 2560)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # 读取一帧以获取分辨率
+    ret, frame = cap.read()
+    if not ret or frame is None:
+        print("无法读取摄像头帧")
+        return
+    # 只使用左边图像
+    frame = frame[:, :1280]
+    frame_height, frame_width = frame.shape[:2]
+
+    # 图像中眼球注视点位置
+    eyeball_px_x = int(eyeball_horizontal_init * frame_width)
+    eyeball_px_y = int(eyeball_vertical_init * frame_height)
 
     while True:
         ret, frame = cap.read()
-        if not ret:
+        if not ret or frame is None:
             print("读取摄像头画面失败")
             break
 
-        cv2.imshow("frame", frame)
+         # 截取左边画面
+        frame = frame[:, :1280]
 
-        # 获取人脸关键点
-        landmarks, blendshapes, rotation_matrix = face_mesh_detector.get_results(frame)
+        cv2.imshow("Left Camera", frame)
+        
+        # 转换BGR到RGB，给detector用
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        landmarks, blendshapes, rotation_matrix = face_mesh_detector.get_results(frame_rgb)
 
         if landmarks:
             try:
@@ -41,14 +62,26 @@ def main():
                 if writer is None:
                     writer = WriteManager_HDF5(hdf5_path)
 
-                # 计算人脸位置
-                face_center_x = (landmarks[33].x + landmarks[263].x) / 2
-                face_center_y = (landmarks[33].y + landmarks[263].y) / 2
+                # 计算人脸中心像素坐标
+                face_center_x_norm = (landmarks[33].x + landmarks[263].x) / 2
+                face_center_y_norm = (landmarks[33].y + landmarks[263].y) / 2
+                face_center_x = int(face_center_x_norm * frame_width)
+                face_center_y = int(face_center_y_norm * frame_height)
 
-                # 控制眼球偏移
-                horizontal_offset = max(0.0, min(1.0, (0.7 - face_center_x) * 2.5))
-                vertical_offset = max(0.0, min(1.0, (0.7 - face_center_y) * 3.0))
+                # 差量计算：人脸位置与眼球初始点的偏移（像素）
+                dx = face_center_x - eyeball_px_x
+                dy = face_center_y - eyeball_px_y
 
+                # 归一化差量
+                dx_norm = -dx / (frame_width / 2)
+                dy_norm = -dy / (frame_height / 2)
+
+                # 灵敏度控制
+                sensitivity = 0.8
+                horizontal_offset = np.clip(eyeball_horizontal_init + dx_norm * sensitivity, 0.0, 1.0)
+                vertical_offset = np.clip(eyeball_vertical_init + dy_norm * sensitivity, 0.0, 1.0)
+
+                # 控制伺服
                 eye_ctrl.eyeball_horizontal = horizontal_offset
                 eye_ctrl.eyeball_vertical = vertical_offset
                 eye_ctrl.send()

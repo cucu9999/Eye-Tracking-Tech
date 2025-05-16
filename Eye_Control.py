@@ -107,14 +107,14 @@ if __name__ == '__main__':
 
     while True:
         ## -------------------------------保持初始-------------------------------
-        # ctrl.eyelid_upper_right = 0.30                                                  # 右上眼皮      向下闭眼 [0, 0.30 , 1] 向上张开
-        # ctrl.eyelid_upper_left = 0.30                                                   # 左上眼皮      向上张开 [0, 0.30,  1] 向下闭眼
+        # ctrl.eyelid_upper_right = 0.30                      # 右上眼皮      向下闭眼 [0, 0.30 , 1] 向上张开
+        # ctrl.eyelid_upper_left = 0.30                       # 左上眼皮      向上张开 [0, 0.30,  1] 向下闭眼
 
-        # ctrl.eyelid_lower_right = 0.63                                                  # 右下眼皮      向下张开 [0, 0.63, 1] 向上闭眼
-        # ctrl.eyelid_lower_left = 0.63                                                   # 左下眼皮      向上闭眼 [0, 0.63,  1] 向下张开
+        # ctrl.eyelid_lower_right = 0.63                      # 右下眼皮      向下张开 [0, 0.63, 1] 向上闭眼
+        # ctrl.eyelid_lower_left = 0.63                       # 左下眼皮      向上闭眼 [0, 0.63,  1] 向下张开
 
-        # ctrl.eyeball_horizontal = 0.50                                                  # 眼球平动      右[0, 0.50, 1] 左
-        # ctrl.eyeball_vertical = 0.29                                                    # 眼球竖动      下[0, 0.29, 1] 上
+        # ctrl.eyeball_horizontal = 0.50                      # 眼球平动      右[0, 0.50, 1] 左
+        # ctrl.eyeball_vertical = 0.29                        # 眼球竖动      下[0, 0.29, 1] 上
 
         ## -------------------------------正弦运动-------------------------------
         ctrl.eyelid_upper_right -= 0.01 * direction[0]                                # 右上眼皮
